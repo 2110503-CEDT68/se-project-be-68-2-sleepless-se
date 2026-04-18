@@ -23,7 +23,7 @@ const UserSchema=new mongoose.Schema({
     },
     role:{
         type:String,
-        snum:['user','admin','manager'],
+        enum:['user','admin','manager'],
         default:'user'
     },
     password:{
@@ -32,15 +32,27 @@ const UserSchema=new mongoose.Schema({
         minlength:6,
         select:false
     },
+    profileImageUrl: {
+        type: String,
+        default: 'no-photo.jpg' 
+    },
     resetPasswordToken: String,
     resetPasswordExpire:Date,
     createdAt:{
         type:Date,
         default:Date.now
+    },
+    privacyPolicyAccepted: {
+    type: Boolean,
+    required: [true, 'You must accept the privacy policy'],
+    default: false
     }
 });
 
 UserSchema.pre('save',async function(next){
+    if (!this.isModified('password')) {
+        next();
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password,salt);
 });
