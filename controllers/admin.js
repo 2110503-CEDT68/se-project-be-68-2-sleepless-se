@@ -6,7 +6,13 @@ const Hotel = require('../models/Hotel');
 // @access    Private
 exports.getSubmissions = async (req, res, next) => {
   try {
-    const submissions = await HotelSubmission.find({ status: 'PENDING' }).populate('manager', 'name email');
+    let queryCondition = {};
+
+    if(req.query.status) {
+      queryCondition.status = req.query.status;
+    }
+
+    const submissions = await HotelSubmission.find(queryCondition).populate('manager', 'name email');
 
     res.status(200).json({ success: true, count: submissions.length, data: submissions});
   } catch (err) {
