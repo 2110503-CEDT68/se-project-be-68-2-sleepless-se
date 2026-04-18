@@ -29,13 +29,22 @@ exports.approveSubmission = async (req, res, next) => {
     if(!submission || submission.status !== 'PENDING') {
       return res.status(404).json({ success: false, message: 'Submission not found or already processed' });
     }
-    const newHotel =  await Hotel.create(submission.hotelData);
+
+    let hotel = await Hotel.findOneAndUpdate(
+        { hotel_name: submission.hotelData.hotel_name }, 
+        submission.hotelData, 
+        { new: true, runValidators: true }
+    );
+
+    if (!hotel) {
+        hotel = await Hotel.create(submission.hotelData);
+    }
 
     submission.status = 'APPROVED';
     submission.reviewedBy = req.user.id;
     await submission.save();
 
-    res.status(200).json({ success: true, message: 'Approved successfully', data: newHotel });
+    res.status(200).json({ success: true, message: 'Approved successfully', data: hotel });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }

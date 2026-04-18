@@ -1,10 +1,24 @@
 const Review = require('../models/Review');
+const Booking = require('../models/Booking');
 
 // POST /api/v1/hotels/:hotelId/reviews
 exports.addReview = async (req, res, next) => {
     try {
         req.body.hotel = req.params.hotelId;
         req.body.user = req.user.id;
+
+        const hasStayed = await Booking.findOne({
+            user: req.user.id,
+            hotel: req.params.hotelId,
+            checkOutDate: { $lt: new Date() }
+        });
+
+        if (!hasStayed) {
+            return res.status(403).json({
+                success: false,
+                msg: 'You can only review a hotel after you have booked and checked out.'
+            });
+        }
 
         const review = await Review.create(req.body);
         res.status(201).json({ success: true, data: review });
