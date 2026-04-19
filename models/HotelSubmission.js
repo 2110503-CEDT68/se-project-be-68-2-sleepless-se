@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 
 const HotelSubmissionSchema = new mongoose.Schema({
   hotelData: {
-    hotel_name: { type: String, required: true },
-    address: { type: String, required: true },
-    district: { type: String, required: true },
-    province: { type: String, required: true },
-    postalcode: {type: String, required: true },
-    region: {type: String, required: true },
+    hotel_name: { type: String },
+    address: { type: String },
+    district: { type: String },
+    province: { type: String },
+    postalcode: {type: String },
+    region: {type: String },
     telephone: { type: String },
     description: { type: String }
   },

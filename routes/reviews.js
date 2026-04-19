@@ -6,7 +6,6 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.route('/').get(getReviews).post(protect, addReview);
 router.route('/:reviewId')
-    .put(protect, authorize('admin'), updateReview)
-    .delete(protect, authorize('admin'), deleteReview);
-
+    .put(protect, updateReview)
+    .delete(protect, deleteReview);
 module.exports = router;

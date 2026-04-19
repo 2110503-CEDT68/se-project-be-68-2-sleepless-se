@@ -55,16 +55,24 @@ exports.getReviews = async (req, res, next) => {
 };
 exports.updateReview = async (req, res, next) => {
     try {
-        const review = await Review.findByIdAndUpdate(req.params.reviewId, {
-            rating: req.body.rating,
-            comment: req.body.comment
-        }, { new: true, runValidators: true });
+        const review = await Review.findById(req.params.reviewId);
 
         if (!review) {
             return res.status(404).json({ success: false, msg: 'Review not found' });
         }
 
-        res.status(200).json({ success: true, data: review });
+        // Allow if admin OR the owner
+        if (req.user.role !== 'admin' && review.user.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, msg: 'Not authorized to update this review' });
+        }
+
+        const updated = await Review.findByIdAndUpdate(
+            req.params.reviewId,
+            { rating: req.body.rating, comment: req.body.comment },
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({ success: true, data: updated });
     } catch (err) {
         res.status(400).json({ success: false, msg: err.message });
     }
@@ -76,6 +84,11 @@ exports.deleteReview = async (req, res, next) => {
 
         if (!review) {
             return res.status(404).json({ success: false, msg: 'Review not found' });
+        }
+
+        // Allow if admin OR the owner
+        if (req.user.role !== 'admin' && review.user.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, msg: 'Not authorized to delete this review' });
         }
 
         await review.deleteOne();
