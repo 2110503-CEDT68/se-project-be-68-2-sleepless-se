@@ -95,18 +95,16 @@ exports.logout=async(req,res,next)=>{
 }
 exports.updateProfile = async (req, res, next) => {
     try {
-        // 1. กรองเฉพาะฟิลด์ที่อนุญาตให้อัปเดตได้
-        // (เราจะไม่รับ email, password หรือ role ตรงนี้เพื่อความปลอดภัย)
+    
         const updatedData = {};
         if (req.body.name) updatedData.name = req.body.name;
         if (req.body.tel) updatedData.tel = req.body.tel;
         if (req.body.profileImageUrl) updatedData.profileImageUrl = req.body.profileImageUrl;
 
-        // 2. ค้นหาและอัปเดตข้อมูลผู้ใช้
-        // req.user.id จะมีค่าก็ต่อเมื่อผ่าน Middleware ป้องกัน Route (เช่น protect) มาแล้ว
+      
         const user = await User.findByIdAndUpdate(req.user.id, updatedData, {
-            new: true, // คืนค่าข้อมูลใหม่ล่าสุดหลังจากอัปเดตเสร็จ
-            runValidators: true // ตรวจสอบ Validation ใน Model อีกรอบ
+            new: true, 
+            runValidators: true 
         });
 
         if (!user) {
@@ -116,7 +114,6 @@ exports.updateProfile = async (req, res, next) => {
             });
         }
 
-        // 3. ส่งข้อมูลที่อัปเดตแล้วกลับไป
         res.status(200).json({
             success: true,
             data: user
