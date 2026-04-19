@@ -101,8 +101,7 @@ exports.updateProfile = async (req, res, next) => {
         if (req.body.tel) updatedData.tel = req.body.tel;
         if (req.body.profileImageUrl) updatedData.profileImageUrl = req.body.profileImageUrl;
 
-      
-        const user = await User.findByIdAndUpdate(req.user.id, updatedData, {
+            const user = await User.findByIdAndUpdate(req.user.id, updatedData, {
             new: true, 
             runValidators: true 
         });

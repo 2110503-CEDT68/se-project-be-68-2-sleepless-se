@@ -53,3 +53,34 @@ exports.getReviews = async (req, res, next) => {
         res.status(400).json({ success: false, msg: err.message });
     }
 };
+exports.updateReview = async (req, res, next) => {
+    try {
+        const review = await Review.findByIdAndUpdate(req.params.reviewId, {
+            rating: req.body.rating,
+            comment: req.body.comment
+        }, { new: true, runValidators: true });
+
+        if (!review) {
+            return res.status(404).json({ success: false, msg: 'Review not found' });
+        }
+
+        res.status(200).json({ success: true, data: review });
+    } catch (err) {
+        res.status(400).json({ success: false, msg: err.message });
+    }
+};
+
+exports.deleteReview = async (req, res, next) => {
+    try {
+        const review = await Review.findById(req.params.reviewId);
+
+        if (!review) {
+            return res.status(404).json({ success: false, msg: 'Review not found' });
+        }
+
+        await review.deleteOne();
+        res.status(200).json({ success: true, data: {} });
+    } catch (err) {
+        res.status(400).json({ success: false, msg: err.message });
+    }
+};
