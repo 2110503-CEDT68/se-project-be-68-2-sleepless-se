@@ -82,20 +82,33 @@ exports.createHotel= async (req,res,next) => {
     });
 };
 
-exports.updateHotel= async (req, res,next) => {
-    try{
-        const hotel = await Hotel.findByIdAndUpdate(req.params.id,req.body,{
+exports.updateHotel = async (req, res, next) => {
+    try {
+        const allowedFields = {};
+        if (req.body.hotel_name)  allowedFields.hotel_name  = req.body.hotel_name;
+        if (req.body.address)     allowedFields.address     = req.body.address;
+        if (req.body.district)    allowedFields.district    = req.body.district;
+        if (req.body.province)    allowedFields.province    = req.body.province;
+        if (req.body.postalcode)  allowedFields.postalcode  = req.body.postalcode;
+        if (req.body.telephone)   allowedFields.telephone   = req.body.telephone;
+        if (req.body.region)      allowedFields.region      = req.body.region;
+        if (req.body.description) allowedFields.description = req.body.description;
+        if (req.body.email)       allowedFields.email       = req.body.email;
+        if (req.body.imageURL)    allowedFields.imageURL    = req.body.imageURL;
+
+        const hotel = await Hotel.findByIdAndUpdate(req.params.id, allowedFields, {
             new: true,
-            runValidators:true
+            runValidators: true
         });
 
-        if(!hotel){
-            return res.status(400).json({success:false});
+        if (!hotel) {
+            return res.status(404).json({ success: false, msg: 'Hotel not found' });
         }
 
-        res.status(200).json({success:true, data:hotel});
-    } catch(err){
-        res.status(400).json({success:false});
+        res.status(200).json({ success: true, data: hotel });
+    } catch (err) {
+        console.error(err.stack);
+        res.status(400).json({ success: false, msg: err.message });
     }
 };
 
