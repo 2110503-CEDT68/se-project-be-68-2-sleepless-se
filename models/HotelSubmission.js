@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const HotelSubmissionSchema = new mongoose.Schema({
+  hotel: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Hotel'
+  },
   hotelData: {
     hotel_name: { type: String },
     address: { type: String },

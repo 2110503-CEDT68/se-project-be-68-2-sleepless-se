@@ -85,17 +85,27 @@ exports.createHotel= async (req,res,next) => {
 
 exports.updateHotel = async (req, res, next) => {
     try {
+        // 1. หาโรงแรมเดิมให้เจอก่อน
         const hotel = await Hotel.findById(req.params.id);
 
         if (!hotel) {
             return res.status(404).json({ success: false, message: 'ไม่พบโรงแรมนี้ในระบบ' });
         }
 
+        // 2. 🧹 กรองข้อมูล: เก็บเฉพาะฟิลด์ที่มีข้อมูลส่งมา (ตัดค่าว่างออก)
+        const partialData = {};
+        for (let key in req.body) {
+            if (req.body[key] !== "" && req.body[key] !== null && req.body[key] !== undefined) {
+                partialData[key] = req.body[key];
+            }
+        }
+
+        // 3. สร้างใบคำขอ โดยเก็บเฉพาะข้อมูลที่กรองแล้ว
         const submission = await HotelSubmission.create({
-            hotel: req.params.id,      
-            hotelData: req.body,       
-            manager: req.user.id,      
-            status: 'PENDING'         
+            hotel: hotel._id,       // 👈 ใช้ ID โรงแรมตัวจริงที่ค้นเจอ
+            hotelData: partialData, // 👈 ใส่เฉพาะข้อมูลที่อยากแก้
+            manager: req.user.id,
+            status: 'PENDING'
         });
 
         res.status(200).json({ 
