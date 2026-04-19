@@ -37,7 +37,7 @@ exports.register = async (req, res, next) => {
         res.status(400).json({ success: false });
         console.log(err.stack);
     }
-};
+}; 
 
 exports.login=async(req,res,next)=>{
     try{
