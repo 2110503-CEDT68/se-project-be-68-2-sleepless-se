@@ -1,5 +1,6 @@
 const Hotel = require("../models/Hotel");
 const Booking = require('../models/Booking.js');
+const HotelSubmission = require('../models/HotelSubmission');
 
 exports.getHotels= async (req,res,next) => {
     let query;
@@ -84,31 +85,33 @@ exports.createHotel= async (req,res,next) => {
 
 exports.updateHotel = async (req, res, next) => {
     try {
-        const allowedFields = {};
-        if (req.body.hotel_name)  allowedFields.hotel_name  = req.body.hotel_name;
-        if (req.body.address)     allowedFields.address     = req.body.address;
-        if (req.body.district)    allowedFields.district    = req.body.district;
-        if (req.body.province)    allowedFields.province    = req.body.province;
-        if (req.body.postalcode)  allowedFields.postalcode  = req.body.postalcode;
-        if (req.body.telephone)   allowedFields.telephone   = req.body.telephone;
-        if (req.body.region)      allowedFields.region      = req.body.region;
-        if (req.body.description) allowedFields.description = req.body.description;
-        if (req.body.email)       allowedFields.email       = req.body.email;
-        if (req.body.imageURL)    allowedFields.imageURL    = req.body.imageURL;
-
-        const hotel = await Hotel.findByIdAndUpdate(req.params.id, allowedFields, {
-            new: true,
-            runValidators: true
-        });
+        const hotel = await Hotel.findById(req.params.id);
 
         if (!hotel) {
-            return res.status(404).json({ success: false, msg: 'Hotel not found' });
+            return res.status(404).json({ success: false, message: 'ไม่พบโรงแรมนี้ในระบบ' });
         }
 
-        res.status(200).json({ success: true, data: hotel });
+        // (Optional) ถ้ามีระบบ Login ควรเช็คด้วยว่าคนที่กดแก้ ใช่เจ้าของโรงแรมไหม
+        // if (hotel.manager.toString() !== req.user.id && req.user.role !== 'admin') {
+        //     return res.status(401).json({ success: false, message: 'คุณไม่มีสิทธิ์แก้ไขโรงแรมนี้' });
+        // }
+
+        const submission = await HotelSubmission.create({
+            hotel: req.params.id,      
+            hotelData: req.body,       
+            manager: req.user.id,      
+            status: 'PENDING'         
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'ส่งคำขอแก้ไขสำเร็จ กรุณารอแอดมินอนุมัติ',
+            data: submission 
+        });
+
     } catch (err) {
-        console.error(err.stack);
-        res.status(400).json({ success: false, msg: err.message });
+        console.log("Update Request Error: ", err);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 

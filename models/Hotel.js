@@ -32,7 +32,7 @@ const HotelSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a region']
     },
-      description: {
+    description: {
         type: String,
         maxlength: [500, 'Description cannot be more than 500 characters']
     },

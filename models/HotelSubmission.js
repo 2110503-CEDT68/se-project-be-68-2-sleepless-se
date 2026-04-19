@@ -8,7 +8,8 @@ const HotelSubmissionSchema = new mongoose.Schema({
     province: { type: String, required: true },
     postalcode: {type: String, required: true },
     region: {type: String, required: true },
-    telephone: { type: String }
+    telephone: { type: String },
+    description: { type: String }
   },
   manager: {
     type: mongoose.Schema.ObjectId,
