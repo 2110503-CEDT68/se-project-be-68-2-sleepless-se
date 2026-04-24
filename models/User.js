@@ -42,11 +42,11 @@ const UserSchema=new mongoose.Schema({
         type:Date,
         default:Date.now
     },
-    privacyPolicyAccepted: {
+    /*privacyPolicyAccepted: {
     type: Boolean,
     required: [true, 'You must accept the privacy policy'],
     default: false
-    }
+    }*/
 });
 
 UserSchema.pre('save',async function(next){

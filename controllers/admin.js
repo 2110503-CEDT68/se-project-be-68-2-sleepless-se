@@ -26,26 +26,56 @@ exports.getSubmissions = async (req, res, next) => {
 exports.approveSubmission = async (req, res, next) => {
   try {
     let submission = await HotelSubmission.findById(req.params.id);
-    if(!submission || submission.status !== 'PENDING') {
-      return res.status(404).json({ success: false, message: 'Submission not found or already processed' });
+    if (!submission || submission.status !== 'PENDING') {
+      return res.status(404).json({ success: false, message: 'ไม่พบใบคำขอ หรือดำเนินการไปแล้ว' });
     }
 
-    let hotel = await Hotel.findOneAndUpdate(
-        { hotel_name: submission.hotelData.hotel_name }, 
-        submission.hotelData, 
-        { new: true, runValidators: true }
-    );
+    let hotel;
+
+    if (submission.hotel) {
+      // ✅ แก้ไข Warning: เปลี่ยน new: true เป็น returnDocument: 'after'
+      hotel = await Hotel.findByIdAndUpdate(
+        submission.hotel,
+        { $set: submission.hotelData },
+        { returnDocument: 'after', runValidators: true } 
+      );
+    } else {
+      hotel = await Hotel.create(submission.hotelData);
+    }
 
     if (!hotel) {
-        hotel = await Hotel.create(submission.hotelData);
+      return res.status(400).json({ success: false, message: 'ไม่สามารถประมวลผลข้อมูลโรงแรมได้' });
     }
 
     submission.status = 'APPROVED';
     submission.reviewedBy = req.user.id;
     await submission.save();
 
-    res.status(200).json({ success: true, message: 'Approved successfully', data: hotel });
+    res.status(200).json({ 
+        success: true, 
+        message: 'อนุมัติการแก้ไขสำเร็จ', 
+        data: hotel 
+    });
+
   } catch (err) {
+    console.log("Approve Error: ", err);
+
+    // 🚀 เพิ่มโค้ดดักจับ Error รหัส 11000 (ข้อมูลซ้ำ) ตรงนี้ครับ
+    if (err.code === 11000) {
+      const duplicateField = Object.keys(err.keyValue)[0];
+      const duplicateValue = err.keyValue[duplicateField];
+      return res.status(400).json({ 
+        success: false, 
+        message: `ไม่อนุมัติ: ข้อมูล '${duplicateField}' ที่ขอแก้ไข (${duplicateValue}) ไปซ้ำกับโรงแรมอื่นที่มีอยู่ในระบบแล้ว` 
+      });
+    }
+
+    // ดัก Validation Error เดิม
+    if (err.name === 'ValidationError') {
+      const message = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({ success: false, message: `ข้อมูลไม่ถูกต้อง: ${message}` });
+    }
+
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
