@@ -36,16 +36,39 @@ exports.addReview = async (req, res, next) => {
 // GET /api/v1/hotels/:hotelId/reviews
 exports.getReviews = async (req, res, next) => {
     try {
-        const reviews = await Review.find({ hotel: req.params.hotelId })
-            .populate('user', 'name');
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 25;
+        const startIndex = (page - 1) * limit;
+        const endIndex = page * limit;
 
-        const avgRating = reviews.length
-            ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+        const total = await Review.countDocuments({ hotel: req.params.hotelId });
+
+        const reviews = await Review.find({ hotel: req.params.hotelId })
+            .populate('user', 'name')
+            .skip(startIndex)
+            .limit(limit);
+
+        // avgRating คำนวณจากทุก review ไม่ใช่แค่หน้าปัจจุบัน
+        const allReviews = await Review.find({ hotel: req.params.hotelId });
+        const avgRating = allReviews.length
+            ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
             : null;
+
+        const pagination = {};
+        if (endIndex < total) {
+            pagination.next = { page: page + 1, limit };
+        }
+        if (startIndex > 0) {
+            pagination.prev = { page: page - 1, limit };
+        }
 
         res.status(200).json({
             success: true,
             count: reviews.length,
+            total,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            pagination,
             avgRating,
             data: reviews
         });

@@ -46,7 +46,12 @@ const HotelSchema = new mongoose.Schema({
     imageURL: {
         type: String,
         default: 'no-photo.jpg'
-    }
+    },
+    price:{
+        type: float,
+        required: [true, 'Please add a price']
+    },
+
 
 }, {
     toJSON:{virtuals:true},

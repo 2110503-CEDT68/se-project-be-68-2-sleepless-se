@@ -1,11 +1,12 @@
 const Hotel = require("../models/Hotel");
 const Booking = require('../models/Booking.js');
 const HotelSubmission = require('../models/HotelSubmission');
+const Review = require('../models/Review');
 
 exports.getHotels= async (req,res,next) => {
     let query;
     const reqQuery = {...req.query};
-    const removeFields=['select','sort','page','limit'];
+    const removeFields=['select','sort','page','limit','minRating','maxRating'];
     removeFields.forEach(param=>delete reqQuery[param]);
     console.log(reqQuery);
 
@@ -30,10 +31,33 @@ exports.getHotels= async (req,res,next) => {
     const startIndex=(page-1)*limit;
     const endIndex=page*limit;
     try{
-       const total = await Hotel.countDocuments();
+        const total = await Hotel.countDocuments();
         query=query.skip(startIndex).limit(limit);
 
-        const hotels = await query;
+        let hotels = await query;
+
+        // Filter by avgRating from reviews
+        if (req.query.minRating || req.query.maxRating) {
+            const minRating = parseFloat(req.query.minRating);
+            const maxRating = parseFloat(req.query.maxRating);
+
+            const hotelsWithRating = await Promise.all(
+                hotels.map(async (hotel) => {
+                    const reviews = await Review.find({ hotel: hotel._id });
+                    const avg = reviews.length
+                        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+                        : null;
+                    return { ...hotel.toObject(), avgRating: avg };
+                })
+            );
+
+            hotels = hotelsWithRating.filter(hotel => {
+                if (hotel.avgRating === null) return false;
+                if (req.query.minRating && hotel.avgRating < minRating) return false;
+                if (req.query.maxRating && hotel.avgRating > maxRating) return false;
+                return true;
+            });
+        }
 
         const pagination ={};
         if(endIndex<total){
