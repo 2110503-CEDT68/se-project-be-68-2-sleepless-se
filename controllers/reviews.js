@@ -120,3 +120,61 @@ exports.deleteReview = async (req, res, next) => {
         res.status(400).json({ success: false, msg: err.message });
     }
 };
+
+// POST /api/v1/reviews/:reviewId/report
+exports.reportReview = async (req, res, next) => {
+    try {
+        const { reason } = req.body;
+        const reviewId = req.params.reviewId;
+        const userId = req.user.id;
+
+        if (!reason) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: 'Please provide a reason for reporting this review' 
+            });
+        }
+
+        const review = await Review.findById(reviewId);
+        if (!review) {
+            return res.status(404).json({ success: false, msg: 'Review not found' });
+        }
+
+        if (
+            req.user.role !== 'admin' && 
+            (req.user.role !== 'manager' || req.user.hotel?.toString() !== review.hotel.toString())
+        ) {
+            return res.status(403).json({ 
+                success: false, 
+                msg: 'คุณไม่มีสิทธิ์ Report รีวิวนี้ (เฉพาะผู้จัดการโรงแรมนี้เท่านั้น)' 
+            });
+        }
+
+        const alreadyReported = review.reports.find(r => r.user.toString() === userId);
+        if (alreadyReported) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: 'You have already reported this review' 
+            });
+        }
+
+        review.reports.push({
+            user: userId,
+            reason: reason
+        });
+
+        review.isReported = true; 
+
+        await review.save();
+
+        res.status(201).json({ 
+            success: true, 
+            msg: 'Review has been reported successfully',
+            data: review 
+        });
+
+    } catch (err) {
+        console.error("Report Review Error: ", err);
+        res.status(500).json({ success: false, msg: 'Server Error' });
+    }
+};

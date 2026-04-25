@@ -48,3 +48,5 @@ const server = app.listen(PORT, console.log('Server running...'));
 
 const reviews = require('./routes/reviews');
 app.use('/api/v1/hotels/:hotelId/reviews', reviews);
+
+app.use('/api/v1/reviews', reviews);

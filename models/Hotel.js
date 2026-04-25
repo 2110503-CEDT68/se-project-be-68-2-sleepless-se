@@ -49,7 +49,7 @@ const HotelSchema = new mongoose.Schema(
       default: "no-photo.jpg",
     },
     price: {
-      type: number,
+      type: Number,
       required: [true, "Please add a price"],
     },
   },

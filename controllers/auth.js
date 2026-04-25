@@ -20,7 +20,7 @@ const sendTokenResponse=(user,statusCode,res)=>{
 
 exports.register = async (req, res, next) => {
     try {
-        const { name, tel, email, password, role/*, privacyPolicyAccepted */} = req.body;
+        const { name, tel, email, password, role, hotel/*, privacyPolicyAccepted */} = req.body;
 
        /* if (!privacyPolicyAccepted) {
             return res.status(400).json({
@@ -30,10 +30,11 @@ exports.register = async (req, res, next) => {
         }*/
 
         const user = await User.create({
-            name, tel, email, password, role/*, privacyPolicyAccepted*/
+            name, tel, email, password, role, hotel/*, privacyPolicyAccepted*/
         });
         sendTokenResponse(user, 200, res);
     } catch (err) {
+        console.log("Err : ",err);
         res.status(400).json({ success: false });
         console.log(err.stack);
     }

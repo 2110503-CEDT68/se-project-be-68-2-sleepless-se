@@ -138,10 +138,12 @@ exports.updateHotel = async (req, res, next) => {
         .json({ success: false, message: "ไม่พบโรงแรมนี้ในระบบ" });
     }
 
-    // (Optional) ถ้ามีระบบ Login ควรเช็คด้วยว่าคนที่กดแก้ ใช่เจ้าของโรงแรมไหม
-    // if (hotel.manager.toString() !== req.user.id && req.user.role !== 'admin') {
-    //     return res.status(401).json({ success: false, message: 'คุณไม่มีสิทธิ์แก้ไขโรงแรมนี้' });
-    // }
+    if (req.user.role !== 'admin' && req.user.hotel?.toString() !== req.params.id) {
+        return res.status(403).json({ 
+            success: false, 
+            message: "คุณไม่มีสิทธิ์แก้ไขข้อมูลของโรงแรมนี้" 
+        });
+    }
 
     const submission = await HotelSubmission.create({
       hotel: req.params.id,
