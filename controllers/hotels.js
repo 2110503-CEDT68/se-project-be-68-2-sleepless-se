@@ -4,81 +4,112 @@ const HotelSubmission = require('../models/HotelSubmission');
 const Review = require('../models/Review');
 
 exports.getHotels= async (req,res,next) => {
-    let query;
-    const reqQuery = {...req.query};
-    const removeFields=['select','sort','page','limit','minRating','maxRating'];
-    removeFields.forEach(param=>delete reqQuery[param]);
-    console.log(reqQuery);
+    try {
+        let query;
+        const reqQuery = {...req.query};
+        const removeFields=['select','sort','page','limit','minRating','maxRating','rating'];
+        removeFields.forEach(param=>delete reqQuery[param]);
 
-    let queryStr = JSON.stringify(reqQuery);
-    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match=>`$${match}`);
+        let queryStr = JSON.stringify(reqQuery);
+        queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match=>`$${match}`);
 
-    query=Hotel.find(JSON.parse(queryStr)).populate('bookings');
+        query=Hotel.find(JSON.parse(queryStr)).populate('bookings');
 
-    if(req.query.select){
-        const fields=req.query.select.split(',').join(' ');
-        query=query.select(fields);
-    }
-    if(req.query.sort){
-        const sortBy=req.query.sort.split(',').join(' ');
-        query=query.sort(sortBy);
-    } else{
-        query=query.sort('-createdAt');
-    }
+        if(req.query.select){
+            const fields=req.query.select.split(',').join(' ');
+            query=query.select(fields);
+        }
+        if(req.query.sort){
+            const sortBy=req.query.sort.split(',').join(' ');
+            query=query.sort(sortBy);
+        } else{
+            query=query.sort('-createdAt');
+        }
 
-    const page=parseInt(req.query.page,10)|| 1;
-    const limit = parseInt(req.query.limit,10)||25;
-    const startIndex=(page-1)*limit;
-    const endIndex=page*limit;
-    try{
-        const total = await Hotel.countDocuments();
-        query=query.skip(startIndex).limit(limit);
+        // --- Rating filter: ทำก่อน pagination เพื่อให้ผลถูกต้อง ---
+        const hasRatingFilter = req.query.rating || req.query.minRating || req.query.maxRating;
 
-        let hotels = await query;
+        if (hasRatingFilter) {
+            // ดึงโรงแรมทั้งหมดก่อน แล้วค่อย filter + paginate
+            let allHotels = await query;
 
-        // Filter by avgRating from reviews
-        if (req.query.minRating || req.query.maxRating) {
-            const minRating = parseFloat(req.query.minRating);
-            const maxRating = parseFloat(req.query.maxRating);
-
+            // คำนวณ avgRating ของทุกโรงแรม
             const hotelsWithRating = await Promise.all(
-                hotels.map(async (hotel) => {
+                allHotels.map(async (hotel) => {
                     const reviews = await Review.find({ hotel: hotel._id });
                     const avg = reviews.length
-                        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+                        ? parseFloat((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1))
                         : null;
                     return { ...hotel.toObject(), avgRating: avg };
                 })
             );
 
-            hotels = hotelsWithRating.filter(hotel => {
+            // Filter ตาม rating
+            let filtered = hotelsWithRating.filter(hotel => {
                 if (hotel.avgRating === null) return false;
-                if (req.query.minRating && hotel.avgRating < minRating) return false;
-                if (req.query.maxRating && hotel.avgRating > maxRating) return false;
+
+                // exact rating query param (เช่น ?rating=4)
+                if (req.query.rating) {
+                    const target = parseFloat(req.query.rating);
+                    if (isNaN(target) || target < 1 || target > 5) return false;
+                    return Math.floor(hotel.avgRating) === Math.floor(target);
+                }
+
+                // range: minRating / maxRating
+                const min = req.query.minRating ? parseFloat(req.query.minRating) : null;
+                const max = req.query.maxRating ? parseFloat(req.query.maxRating) : null;
+                if (min !== null && hotel.avgRating < min) return false;
+                if (max !== null && hotel.avgRating > max) return false;
                 return true;
+            });
+
+            const total = filtered.length;
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 25;
+            const startIndex = (page - 1) * limit;
+            const endIndex = page * limit;
+
+            const paginatedHotels = filtered.slice(startIndex, endIndex);
+
+            const pagination = {};
+            if (endIndex < total) pagination.next = { page: page + 1, limit };
+            if (startIndex > 0) pagination.prev = { page: page - 1, limit };
+
+            return res.status(200).json({
+                success: true,
+                count: paginatedHotels.length,
+                total,
+                totalPages: Math.ceil(total / limit),
+                currentPage: page,
+                pagination,
+                data: paginatedHotels
             });
         }
 
+        // --- ไม่มี rating filter: paginate ปกติ ---
+        const page=parseInt(req.query.page,10)|| 1;
+        const limit = parseInt(req.query.limit,10)||25;
+        const startIndex=(page-1)*limit;
+        const endIndex=page*limit;
+
+        const total = await Hotel.countDocuments(JSON.parse(queryStr));
+        query=query.skip(startIndex).limit(limit);
+
+        const hotels = await query;
+
         const pagination ={};
         if(endIndex<total){
-            pagination.next={
-                page:page+1,
-                limit
-            }
+            pagination.next={ page:page+1, limit };
         }
-
         if(startIndex>0){
-            pagination.prev={
-                page:page-1,
-                limit
-            }
+            pagination.prev={ page:page-1, limit };
         }
 
         res.status(200).json({
-            success:true, count:hotels.length,pagination, data:hotels
+            success:true, count:hotels.length, total, totalPages: Math.ceil(total/limit), currentPage:page, pagination, data:hotels
         });
     } catch(err){
-        res.status(400).json({success:false});
+        res.status(400).json({success:false, msg: err.message});
     }
 };
 
