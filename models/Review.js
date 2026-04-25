@@ -22,6 +22,27 @@ const ReviewSchema = new mongoose.Schema({
         required: [true, 'Please add a comment'],
         maxlength: [500, 'Comment cannot be more than 500 characters']
     },
+    isReported: {
+        type: Boolean,
+        default: false
+    },
+    reports: [
+        {
+            user: {
+                type: mongoose.Schema.ObjectId,
+                ref: 'User',
+                required: true
+            },
+            reason: {
+                type: String,
+                required: [true, 'Please add a reason for reporting']
+            },
+            reportedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ],
     createdAt: {
         type: Date,
         default: Date.now
