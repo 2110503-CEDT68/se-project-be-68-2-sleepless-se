@@ -10,12 +10,21 @@ const helmet = require('helmet');
 const { xss } = require('express-xss-sanitizer');
 const hpp = require('hpp');
 const cors = require('cors');
+const swaggerUI = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
 
 dotenv.config({ path: './config/config.env' });
 
 connectDB();
 
 const app = express();
+
+
+const { specs, swaggerUi } = require('./swagger');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+    customSiteTitle: 'Hotel Booking API Docs'
+}));
 
 app.use(express.json());
 app.use(mongoSanitize());
