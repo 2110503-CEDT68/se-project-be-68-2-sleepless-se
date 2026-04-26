@@ -4,33 +4,33 @@ const Hotel = require('../models/Hotel');
 exports.getBookings = async (req, res, next) => {
   let query;
 
-  // 1. ถ้าไม่ใช่ Admin ให้เห็นเฉพาะของตัวเอง (ดึงแค่ข้อมูลโรงแรม ไม่ต้องดึงข้อมูล user)
+  // 1. ถ้าไม่ใช่ Admin ให้เห็นเฉพาะของตัวเอง
   if (req.user.role !== 'admin') {
     query = Booking.find({ user: req.user.id })
       .populate({
         path: 'hotel',
-        select: 'hotel_name address telephone'
+        select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
       });
   } else {
-    // 2. สำหรับ Admin ให้ดึงข้อมูล user (name, email) มาด้วย เพื่อดูว่าใครเป็นคนจอง
+    // 2. สำหรับ Admin
     if (req.params.hotelId) {
       query = Booking.find({ hotel: req.params.hotelId })
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone'
+          select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
         })
         .populate({
-          path: 'user', // ดึงข้อมูลคนจองให้ Admin เห็น
+          path: 'user',
           select: 'name email'
         });
     } else {
       query = Booking.find()
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone'
+          select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
         })
         .populate({
-          path: 'user', // ดึงข้อมูลคนจองให้ Admin เห็น
+          path: 'user',
           select: 'name email'
         });
     }
@@ -53,16 +53,13 @@ exports.getBookings = async (req, res, next) => {
   }
 };
 
-
 exports.getBooking = async (req, res, next) => {
     try {
-        
         const booking = await Booking.findById(req.params.id).populate({
             path: 'hotel', 
-            select: 'hotel_name address telephone'
+            select: 'hotel_name address telephone imageURL' // มีอยู่แล้ว
         });
 
-       
         if (!booking) {
             return res.status(404).json({
                 success: false,
@@ -70,7 +67,6 @@ exports.getBooking = async (req, res, next) => {
             });
         }
 
-       
         if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
             return res.status(401).json({
                 success: false,
@@ -93,17 +89,15 @@ exports.getBooking = async (req, res, next) => {
 
 exports.addBooking = async (req, res, next) => {
     try {
-        // 1. ตรวจสอบว่าเอา Hotel ID มาจากไหน (URL หรือ Body)
         const hotelId = req.params.hotelId || req.body.hotel;
 
         if (!hotelId) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide a hotel ID either in URL or in Body"
+                message: "Please provide a hotel ID"
             });
         }
 
-        // 2. ตรวจสอบวันที่ (เหมือนเดิม)
         const { checkInDate, checkOutDate } = req.body;
         if (!checkInDate || !checkOutDate) {
             return res.status(400).json({
@@ -112,7 +106,6 @@ exports.addBooking = async (req, res, next) => {
             });
         }
 
-        // 3. คำนวณจำนวนคืน (เหมือนเดิม)
         const checkIn = new Date(checkInDate);
         const checkOut = new Date(checkOutDate);
         const diffNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
@@ -124,11 +117,9 @@ exports.addBooking = async (req, res, next) => {
             });
         }
 
-        // 4. เตรียมข้อมูลลง Body เพื่อบันทึก
-        req.body.hotel = hotelId; // ใช้ hotelId ที่หาได้จากข้อ 1
+        req.body.hotel = hotelId;
         req.body.user = req.user.id;
 
-        // 5. ตรวจสอบว่าโรงแรมมีอยู่จริงไหม
         const hotel = await Hotel.findById(hotelId);
         if (!hotel) {
             return res.status(404).json({
@@ -137,8 +128,13 @@ exports.addBooking = async (req, res, next) => {
             });
         }
 
-        // 6. บันทึก
-        const booking = await Booking.create(req.body);
+        let booking = await Booking.create(req.body);
+        
+        // Populate ข้อมูลโรงแรมก่อนส่งกลับ เพื่อให้หน้าบ้านได้รูปทันทีหลังจอง
+        booking = await booking.populate({
+            path: 'hotel',
+            select: 'hotel_name address telephone imageURL'
+        });
 
         res.status(200).json({
             success: true,
@@ -172,10 +168,15 @@ exports.updateBooking = async (req,res,next)=>{
             });
         }
 
-        booking= await Booking.findByIdAndUpdate(req.params.id,req.body,{
-            new:true,
-            runValidators:true
+        // อัปเดตและ Populate ข้อมูลใหม่กลับไปพร้อมรูปภาพ
+        booking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        }).populate({
+            path: 'hotel',
+            select: 'hotel_name address telephone imageURL'
         });
+
         res.status(200).json({
             success:true,
             data: booking
@@ -185,39 +186,6 @@ exports.updateBooking = async (req,res,next)=>{
         return res.status(500).json({
             success:false,
             message:"Cannot update Booking"
-        });
-    }
-};
-
-exports.deleteBooking = async (req,res,next)=>{
-    try{
-        const booking = await Booking.findById(req.params.id);
-
-        if(!booking){
-            return res.status(404).json({
-                success:false,
-                message:`No booking with the id of ${req.params.id}`
-            });
-        }
-
-        if(booking.user.toString()!==req.user.id && req.user.role!=='admin'){
-            return res.status(401).json({
-                success:false,
-                message:`User ${req.user.id} is authorized to delete this booking`
-            });
-        }
-
-        await booking.deleteOne();
-
-        res.status(200).json({
-            success:true,
-            data: {}
-        });
-    } catch(error){
-        console.log(error);
-        return res.status(500).json({
-            success:false,
-            message:"Cannot delete Booking"
         });
     }
 };
