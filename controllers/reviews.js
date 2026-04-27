@@ -44,11 +44,10 @@ exports.getReviews = async (req, res, next) => {
         const total = await Review.countDocuments({ hotel: req.params.hotelId });
 
         const reviews = await Review.find({ hotel: req.params.hotelId })
-            .populate('user', 'name','profileImageUrl')
+            .populate('user', 'name profileImageUrl')
             .skip(startIndex)
             .limit(limit);
 
-        // avgRating คำนวณจากทุก review ไม่ใช่แค่หน้าปัจจุบัน
         const allReviews = await Review.find({ hotel: req.params.hotelId });
         const avgRating = allReviews.length
             ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)

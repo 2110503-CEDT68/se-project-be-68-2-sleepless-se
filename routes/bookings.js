@@ -9,7 +9,7 @@ router.route('/')
     .get(protect, authorize('admin', 'user', 'manager'), getBookings)
     .post(protect, authorize('admin', 'user', 'manager'), addBooking);
 
-// เพิ่ม 'manager' ในส่วนของ GET, PUT, DELETE รายตัว
+
 router.route('/:id')
     .get(protect, authorize('admin', 'user', 'manager'), getBooking)
     .put(protect, authorize('admin', 'user', 'manager'), updateBooking)
