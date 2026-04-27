@@ -20,6 +20,9 @@ const BookingSchema=new mongoose.Schema({
         ref:'Hotel',
         required:true
     },
+    price:{
+        type:Number
+    },
     createdAt:{
         type:Date,
         default:Date.now

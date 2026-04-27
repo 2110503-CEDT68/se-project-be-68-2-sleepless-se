@@ -52,6 +52,11 @@ const HotelSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please add a price"],
     },
+    averageRating: {
+      type: Number,
+      min: [1, 'Rating must be at least 1'],
+      max: [5, 'Rating must not be more than 5'],
+    }
   },
   {
     toJSON: { virtuals: true },
