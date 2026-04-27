@@ -38,7 +38,7 @@ const UserSchema=new mongoose.Schema({
     },
     profileImageUrl: {
         type: String,
-        default: 'no-photo.jpg' 
+        default: '#0ea5e9' 
     },
     resetPasswordToken: String,
     resetPasswordExpire:Date,
