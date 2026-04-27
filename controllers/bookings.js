@@ -4,20 +4,12 @@ const Hotel = require('../models/Hotel');
 exports.getBookings = async (req, res, next) => {
   let query;
 
-  // 1. ถ้าไม่ใช่ Admin ให้เห็นเฉพาะของตัวเอง
-  if (req.user.role !== 'admin') {
-    query = Booking.find({ user: req.user.id })
-      .populate({
-        path: 'hotel',
-        select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
-      });
-  } else {
-    // 2. สำหรับ Admin
+  if (req.user.role === 'admin') {
     if (req.params.hotelId) {
       query = Booking.find({ hotel: req.params.hotelId })
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
+          select: 'hotel_name address telephone imageURL'
         })
         .populate({
           path: 'user',
@@ -27,13 +19,31 @@ exports.getBookings = async (req, res, next) => {
       query = Booking.find()
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone imageURL' // เพิ่ม imageURL
+          select: 'hotel_name address telephone imageURL'
         })
         .populate({
           path: 'user',
           select: 'name email'
         });
     }
+  } 
+  else if (req.user.role === 'manager') {
+    query = Booking.find({ hotel: req.user.hotel })
+      .populate({
+        path: 'hotel',
+        select: 'hotel_name address telephone imageURL'
+      })
+      .populate({
+        path: 'user',
+        select: 'name email'
+      });
+  } 
+  else {
+    query = Booking.find({ user: req.user.id })
+      .populate({
+        path: 'hotel',
+        select: 'hotel_name address telephone imageURL'
+      });
   }
 
   try {
