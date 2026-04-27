@@ -5,8 +5,15 @@ const router = express.Router({mergeParams: true});
 
 const {protect, authorize} = require('../middleware/auth.js');
 
-router.route('/').get(protect, getBookings).post(protect, authorize('admin', 'user'),addBooking);
-router.route('/:id').get(protect, getBooking).put(protect, authorize('admin', 'user'),updateBooking).delete(protect, authorize('admin', 'user'),deleteBooking);
+router.route('/')
+    .get(protect, authorize('admin', 'user', 'manager'), getBookings)
+    .post(protect, authorize('admin', 'user', 'manager'), addBooking);
+
+// เพิ่ม 'manager' ในส่วนของ GET, PUT, DELETE รายตัว
+router.route('/:id')
+    .get(protect, authorize('admin', 'user', 'manager'), getBooking)
+    .put(protect, authorize('admin', 'user', 'manager'), updateBooking)
+    .delete(protect, authorize('admin', 'user', 'manager'), deleteBooking);
 
 module.exports = router;
 

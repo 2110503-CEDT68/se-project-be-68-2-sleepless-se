@@ -9,7 +9,7 @@ exports.getBookings = async (req, res, next) => {
       query = Booking.find({ hotel: req.params.hotelId })
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone imageURL'
+          select: 'hotel_name address telephone imageURL price'
         })
         .populate({
           path: 'user',
@@ -19,7 +19,7 @@ exports.getBookings = async (req, res, next) => {
       query = Booking.find()
         .populate({
           path: 'hotel',
-          select: 'hotel_name address telephone imageURL'
+          select: 'hotel_name address telephone imageURL price'
         })
         .populate({
           path: 'user',
@@ -31,7 +31,7 @@ exports.getBookings = async (req, res, next) => {
     query = Booking.find({ hotel: req.user.hotel })
       .populate({
         path: 'hotel',
-        select: 'hotel_name address telephone imageURL'
+        select: 'hotel_name address telephone imageURL price'
       })
       .populate({
         path: 'user',
@@ -42,7 +42,7 @@ exports.getBookings = async (req, res, next) => {
     query = Booking.find({ user: req.user.id })
       .populate({
         path: 'hotel',
-        select: 'hotel_name address telephone imageURL'
+        select: 'hotel_name address telephone imageURL price'
       });
   }
 
@@ -67,7 +67,7 @@ exports.getBooking = async (req, res, next) => {
     try {
         const booking = await Booking.findById(req.params.id).populate({
             path: 'hotel', 
-            select: 'hotel_name address telephone imageURL' // มีอยู่แล้ว
+            select: 'hotel_name address telephone imageURL price' 
         });
 
         if (!booking) {
@@ -143,7 +143,7 @@ exports.addBooking = async (req, res, next) => {
         // Populate ข้อมูลโรงแรมก่อนส่งกลับ เพื่อให้หน้าบ้านได้รูปทันทีหลังจอง
         booking = await booking.populate({
             path: 'hotel',
-            select: 'hotel_name address telephone imageURL'
+            select: 'hotel_name address telephone imageURL price'
         });
 
         res.status(200).json({
@@ -184,7 +184,7 @@ exports.updateBooking = async (req,res,next)=>{
             runValidators: true
         }).populate({
             path: 'hotel',
-            select: 'hotel_name address telephone imageURL'
+            select: 'hotel_name address telephone imageURL price'
         });
 
         res.status(200).json({
