@@ -44,7 +44,7 @@ exports.getReviews = async (req, res, next) => {
         const total = await Review.countDocuments({ hotel: req.params.hotelId });
 
         const reviews = await Review.find({ hotel: req.params.hotelId })
-            .populate('user', 'name')
+            .populate('user', 'name','profileImageUrl')
             .skip(startIndex)
             .limit(limit);
 
