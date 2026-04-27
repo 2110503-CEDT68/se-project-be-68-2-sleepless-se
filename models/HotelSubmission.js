@@ -13,6 +13,7 @@ const HotelSubmissionSchema = new mongoose.Schema({
     postalcode: {type: String },
     region: {type: String },
     telephone: { type: String },
+    price: { type: String },
     description: { type: String }
   },
   manager: {
