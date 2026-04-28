@@ -190,7 +190,7 @@ exports.rejectReview = async (req, res) => {
   try {
     const review = await Review.findByIdAndUpdate(
       req.params.reviewId,
-      { status: "rejected" },
+      { status: "rejected", isReported: false },
       { new: true },
     );
     if (!review)
