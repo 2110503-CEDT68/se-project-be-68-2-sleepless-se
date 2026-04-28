@@ -595,6 +595,7 @@ module.exports = router;
  *     summary: Reject a review (Admin only)
  *     description: >
  *       Admin ใช้ endpoint นี้เพื่อตั้ง `status` ของ review เป็น `rejected`
+ *       และรีเซ็ต `isReported` กลับเป็น `false` พร้อมกัน
  *       เช่น เมื่อ review ถูก report และผ่านการพิจารณาแล้วว่าละเมิดนโยบาย
  *     tags: [Reviews]
  *     security:
@@ -616,7 +617,7 @@ module.exports = router;
  *         example: "64f1b2c3d4e5f6a7b8c9d0e4"
  *     responses:
  *       200:
- *         description: Review rejected successfully
+ *         description: Review rejected successfully (status = "rejected", isReported = false)
  *         content:
  *           application/json:
  *             schema:
