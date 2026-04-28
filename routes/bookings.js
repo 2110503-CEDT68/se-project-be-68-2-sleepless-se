@@ -35,6 +35,10 @@ module.exports = router;
  *           type: string
  *           format: date
  *           example: "2024-06-03"
+ *         price:
+ *           type: number
+ *           description: Price of the booking
+ *           example: 2500
  *         user:
  *           type: object
  *           properties:
@@ -65,6 +69,9 @@ module.exports = router;
  *             imageURL:
  *               type: string
  *               example: "https://example.com/images/hotel.jpg"
+ *             price:
+ *               type: number
+ *               example: 2500
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -84,8 +91,9 @@ module.exports = router;
  *   get:
  *     summary: Get all bookings
  *     description: >
- *       - **User / Manager**: Returns only their own bookings.
- *       - **Admin**: Returns all bookings across all hotels.
+ *       - **User**: Returns only their own bookings (no user populated).
+ *       - **Manager**: Returns all bookings of their assigned hotel (user populated).
+ *       - **Admin**: Returns all bookings across all hotels (user populated).
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
@@ -133,13 +141,111 @@ module.exports = router;
  *                 message:
  *                   type: string
  *                   example: "Cannot find Booking"
+ *
+ *   post:
+ *     summary: Add a new booking (hotel ID in request body)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - hotel
+ *               - checkInDate
+ *               - checkOutDate
+ *             properties:
+ *               hotel:
+ *                 type: string
+ *                 description: Hotel ID
+ *                 example: "64f1b2c3d4e5f6a7b8c9d0e3"
+ *               checkInDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-06-01"
+ *               checkOutDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-06-03"
+ *               price:
+ *                 type: number
+ *                 example: 2500
+ *     responses:
+ *       200:
+ *         description: Booking created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Booking'
+ *       400:
+ *         description: Missing fields or booking exceeds 3 nights
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Booking cannot exceed 3 nights. You requested 5 nights."
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Not authorized to access this route"
+ *       404:
+ *         description: Hotel not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "No hotel with the id of 64f1b2c3d4e5f6a7b8c9d0e3"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Cannot create Booking"
  */
 
 /**
  * @swagger
  * /api/v1/hotels/{hotelId}/bookings:
  *   get:
- *     summary: Get all bookings for a specific hotel (Admin only)
+ *     summary: Get all bookings for a specific hotel
+ *     description: Admin only — filter bookings by hotelId via path param
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
@@ -227,104 +333,9 @@ module.exports = router;
  *                 type: string
  *                 format: date
  *                 example: "2024-06-03"
- *     responses:
- *       200:
- *         description: Booking created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/Booking'
- *       400:
- *         description: Missing fields or booking exceeds 3 nights
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Booking cannot exceed 3 nights. You requested 5 nights."
- *       401:
- *         description: Not authorized
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Not authorized to access this route"
- *       404:
- *         description: Hotel not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "No hotel with the id of 64f1b2c3d4e5f6a7b8c9d0e3"
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Cannot create Booking"
- */
-
-/**
- * @swagger
- * /api/v1/bookings:
- *   post:
- *     summary: Add a new booking (hotel ID in request body)
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - hotel
- *               - checkInDate
- *               - checkOutDate
- *             properties:
- *               hotel:
- *                 type: string
- *                 description: Hotel ID
- *                 example: "64f1b2c3d4e5f6a7b8c9d0e3"
- *               checkInDate:
- *                 type: string
- *                 format: date
- *                 example: "2024-06-01"
- *               checkOutDate:
- *                 type: string
- *                 format: date
- *                 example: "2024-06-03"
+ *               price:
+ *                 type: number
+ *                 example: 2500
  *     responses:
  *       200:
  *         description: Booking created successfully
@@ -491,6 +502,9 @@ module.exports = router;
  *                 type: string
  *                 format: date
  *                 example: "2024-06-07"
+ *               price:
+ *                 type: number
+ *                 example: 2500
  *     responses:
  *       200:
  *         description: Booking updated successfully

@@ -59,6 +59,9 @@ module.exports = router;
  *             name:
  *               type: string
  *               example: "John Doe"
+ *             profileImageUrl:
+ *               type: string
+ *               example: "https://example.com/images/profile.jpg"
  *         rating:
  *           type: number
  *           minimum: 1
@@ -68,6 +71,11 @@ module.exports = router;
  *           type: string
  *           maxLength: 500
  *           example: "Great hotel, clean rooms and friendly staff!"
+ *         status:
+ *           type: string
+ *           description: Review status — set to 'rejected' by admin if review violates policy
+ *           example: "rejected"
+ *           nullable: true
  *         isReported:
  *           type: boolean
  *           example: false
@@ -552,6 +560,99 @@ module.exports = router;
  *                 msg:
  *                   type: string
  *                   example: "คุณไม่มีสิทธิ์ Report รีวิวนี้ (เฉพาะผู้จัดการโรงแรมนี้เท่านั้น)"
+ *       404:
+ *         description: Review not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 msg:
+ *                   type: string
+ *                   example: "Review not found"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 msg:
+ *                   type: string
+ *                   example: "Server Error"
+ */
+
+/**
+ * @swagger
+ * /api/v1/hotels/{hotelId}/reviews/{reviewId}/reject:
+ *   put:
+ *     summary: Reject a review (Admin only)
+ *     description: >
+ *       Admin ใช้ endpoint นี้เพื่อตั้ง `status` ของ review เป็น `rejected`
+ *       เช่น เมื่อ review ถูก report และผ่านการพิจารณาแล้วว่าละเมิดนโยบาย
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: hotelId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Hotel ID
+ *         example: "64f1b2c3d4e5f6a7b8c9d0e1"
+ *       - in: path
+ *         name: reviewId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Review ID to reject
+ *         example: "64f1b2c3d4e5f6a7b8c9d0e4"
+ *     responses:
+ *       200:
+ *         description: Review rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Review'
+ *       401:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 msg:
+ *                   type: string
+ *                   example: "Not authorized to access this route"
+ *       403:
+ *         description: Forbidden — admin role required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 msg:
+ *                   type: string
+ *                   example: "User role is not authorized to access this route"
  *       404:
  *         description: Review not found
  *         content:

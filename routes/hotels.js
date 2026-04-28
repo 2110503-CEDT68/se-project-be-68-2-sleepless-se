@@ -59,6 +59,13 @@ module.exports = router;
  *         price:
  *           type: number
  *           example: 2500
+ *         averageRating:
+ *           type: number
+ *           minimum: 1
+ *           maximum: 5
+ *           nullable: true
+ *           description: Stored average rating (1–5). Null if no reviews yet.
+ *           example: 4.2
  *         bookings:
  *           type: array
  *           description: Virtual field — populated bookings
@@ -281,6 +288,12 @@ module.exports = router;
  *               price:
  *                 type: number
  *                 example: 2500
+ *               averageRating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *                 example: 4.2
  *     responses:
  *       201:
  *         description: Hotel created successfully
@@ -445,6 +458,12 @@ module.exports = router;
  *               price:
  *                 type: number
  *                 example: 3000
+ *               averageRating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 nullable: true
+ *                 example: 4.2
  *     responses:
  *       200:
  *         description: Update request submitted — pending admin approval
