@@ -42,6 +42,9 @@ module.exports = router;
  *         telephone:
  *           type: string
  *           example: "021234567"
+ *         price:
+ *           type: string
+ *           example: "2500"
  *         description:
  *           type: string
  *           example: "A luxury hotel in the heart of Bangkok"
